@@ -1,26 +1,30 @@
 # Python Nvidia Video Reader
 
-IN CONSTRUCTION, 1 WEEK LEFT :D  
-
 GPU Accelerated video decoder.  
-Read your .mp4 videos with and Nvidia GPU.  
+Read your .mp4 videos with and Nvidia GPU.
 
 This is a wrapper around NVIDIA VIDEO CODEC SDK and FFMPEG.
 
-## Supported formats and hardware  
-You can find extended documentation in [Nvidia site](https://docs.nvidia.com/video-technologies/video-codec-sdk/ffmpeg-with-nvidia-gpu/index.html)  
-Currently, only the following formats are supported:  
-![](https://developer.nvidia.com/sites/default/files/akamai/designworks/images-videocodec/VCSDK_007a.png)  
+## Supported formats and hardware
 
-Check if your GPU is suitable [here](https://developer.nvidia.com/video-encode-and-decode-gpu-support-matrix-new#Encoder)  
+You can find extended documentation
+in [Nvidia site](https://docs.nvidia.com/video-technologies/video-codec-sdk/ffmpeg-with-nvidia-gpu/index.html)  
 
-Roughly 10XX Generation supports h264 and 4:2:0 pixel format,
-30XX gen supports h264,h265 and av1 for 4:2:0 and 4:4:4.  
+![](https://developer.nvidia.com/sites/default/files/akamai/designworks/images-videocodec/VCSDK_007a.png)
 
-## Quick start  
+Check if your GPU is
+suitable [here](https://developer.nvidia.com/video-encode-and-decode-gpu-support-matrix-new#Encoder)
+
+Roughly 10XX Generation supports h264 and 30XX gen supports h264,h265 and av1.
+
+CURRENTLY ONLY **H264** IS SUPPORTED  
+*Tested in linux for RTX 3090*  
+## Quick start
+
 Be sure you have ffmpeg with nvidia codecs:  
 `ffmpeg -codecs | grep cuvid`  
-You should see something like:   
+You should see something like, look for cuvid:
+
 ```
  DEV.LS h264                 H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10 (decoders: h264 h264_crystalhd h264_v4l2m2m h264_vdpau h264_cuvid ) (encoders: libx264 libx264rgb h264_nvenc h264_omx h264_v4l2m2m h264_vaapi nvenc nvenc_h264 )
  DEV.L. hevc                 H.265 / HEVC (High Efficiency Video Coding) (decoders: hevc hevc_cuvid ) (encoders: libx265 nvenc_hevc hevc_nvenc hevc_vaapi )
@@ -32,24 +36,29 @@ You should see something like:
  DEV.L. vp8                  On2 VP8 (decoders: vp8 vp8_v4l2m2m libvpx vp8_cuvid ) (encoders: libvpx vp8_v4l2m2m vp8_vaapi )
  DEV.L. vp9                  Google VP9 (decoders: vp9 vp9_v4l2m2m libvpx-vp9 vp9_cuvid ) (encoders: libvpx-vp9 vp9_vaapi )
 ```
+
 Then pip-install the package  
-`pip install pynvideo-reader`  
-Then it's super silly:  
+`pip install pynvideo-reader`
+
+## Examples
+
+Loading frame-wise  (generator)
 
 ```
-import pynviread as pynv
-with pynv.NvidiaReader(video_path,video_shape) as reader:
-    video = reader.video
+from pynviread import NvidiaReader
+import pynviread.examples as ex
+with NvidiaReader(src=ex.yuv420p()['path'], verbose=True) as reader:
+    video = np.stack([frame for frame in reader]) #Loading as a generator
 ```
-There metadata is also read and shape auto detected if you have
-`ffprobe` installed:  
-```
-import pynviread as pynv
-with pynv.NvidiaReader(video_path,video_shape) as reader:
-    fps = reader.framerate
-    amount_of_frames=reader.n_frames
-    ...
-    everything= reader.raw_metadata # Everything got by ffprobe
+
+Loading whole-video:
 
 ```
+from pynviread import NvidiaReader
+import pynviread.examples as ex
+with NvidiaReader(src=ex.yuv420p()['path'], verbose=True) as reader:
+    video = reader.read()
+```
+Video metadata is also loaded via `ffprobe`
+
 
