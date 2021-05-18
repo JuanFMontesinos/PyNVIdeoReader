@@ -8,7 +8,7 @@ This is a wrapper around NVIDIA VIDEO CODEC SDK and FFMPEG.
 ## Supported formats and hardware
 
 You can find extended documentation
-in [Nvidia site](https://docs.nvidia.com/video-technologies/video-codec-sdk/ffmpeg-with-nvidia-gpu/index.html)  
+in [Nvidia site](https://docs.nvidia.com/video-technologies/video-codec-sdk/ffmpeg-with-nvidia-gpu/index.html)
 
 ![](https://developer.nvidia.com/sites/default/files/akamai/designworks/images-videocodec/VCSDK_007a.png)
 
@@ -18,7 +18,8 @@ suitable [here](https://developer.nvidia.com/video-encode-and-decode-gpu-support
 Roughly 10XX Generation supports h264 and 30XX gen supports h264,h265 and av1.
 
 CURRENTLY ONLY **H264** IS SUPPORTED  
-*Tested in linux for RTX 3090*  
+*Tested in linux for RTX 3090*
+
 ## Quick start
 
 Be sure you have ffmpeg with nvidia codecs:  
@@ -41,8 +42,8 @@ Then pip-install the package
 `pip install pynvideo-reader`
 
 ## Examples
-
-Loading frame-wise  (generator)
+### Data loading
+#### Loading frame-wise  (generator)
 
 ```
 from pynviread import NvidiaReader
@@ -51,7 +52,7 @@ with NvidiaReader(src=ex.yuv420p()['path'], verbose=True) as reader:
     video = np.stack([frame for frame in reader]) #Loading as a generator
 ```
 
-Loading whole-video:
+#### Loading whole-video
 
 ```
 from pynviread import NvidiaReader
@@ -59,6 +60,33 @@ import pynviread.examples as ex
 with NvidiaReader(src=ex.yuv420p()['path'], verbose=True) as reader:
     video = reader.read()
 ```
-Video metadata is also loaded via `ffprobe`
+
+Custom ffmpeg commands can be passed to reshape, crop, resample... Note that `ffprobe` is used to infer image shape,
+colorspace... Change the img_shape and number of channels accordingly.
+### Custom ffmpeg calls
+#### FFmpeg less verbose
+
+```
+from pynviread import NvidiaReader
+import pynviread.examples as ex
+with NvidiaReader(src=ex.yuv420p()['path'], verbose=True,
+                  input_options=['-hide_banner','-loglevel','error']) as reader:
+    video = reader.read()
+```
+
+#### Frame seeking  and cutting
+
+This is not straight-forward, check [ffmpeg explanation](https://trac.ffmpeg.org/wiki/Seeking)
+
+```
+from pynviread import NvidiaReader
+import pynviread.examples as ex
+with NvidiaReader(src=ex.yuv420p()['path'], verbose=True,
+                  input_options=['-ss','00:0:10'],
+                  output_options=['-to','00:0:20']) as reader:
+    video = reader.read()
+```
+In short, you can add as many commands as you want.  
+
 
 

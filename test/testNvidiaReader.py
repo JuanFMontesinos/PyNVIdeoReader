@@ -26,7 +26,8 @@ class TestFramework(unittest.TestCase):
 
     def testGenReader_yuv420p(self):
         yuv420 = self.load_yuv420p()
-        with NvidiaReader(src=ex.yuv420p()['path'], verbose=True) as reader:
+        with NvidiaReader(src=ex.yuv420p()['path'],
+                          input_options=['-hide_banner', '-loglevel', 'error']) as reader:
             video = np.stack([frame for frame in reader])
             difference = np.abs(video[:10].astype('float') - yuv420.astype('float')).mean()
             self.assertTrue(difference < 1, f'Readed video doesnt match imageio ground-truth')
@@ -37,4 +38,4 @@ class TestFramework(unittest.TestCase):
 
     def testPixelFormatError(self):
         with self.assertRaises(AssertionError):
-            reader = NvidiaReader(src=ex.yuv444()['path0'], verbose=True)
+            reader = NvidiaReader(src=ex.yuv444()['path'], verbose=True)

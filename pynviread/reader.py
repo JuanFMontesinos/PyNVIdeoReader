@@ -20,7 +20,24 @@ MISC_METADATA = {'time_base': {'name': 'time_base', 'type': str},
 
 
 class NvidiaReader:
-    def __init__(self, src: str, img_shape: Tuple[int, int] = None, verbose: bool = False):
+    """
+    FFMPEG wrapper that enables video decoding through nvidia GPU.
+    Calls ffmpeg as follows
+    ffmpeg [input options] -i input [output options] output
+
+    Note that ffprobe is used to infer image shape and other metadata. If you
+    crop, rescale or change the color space you have to manually pass output metadata for the buffer to work properly.
+
+
+    :param src: Path to the video
+    :param img_shape: (tuple) Image shape (heigth,width)
+    :param verbose: (bool)
+    :param input_options: (list) additional commands to pass to ffmpeg
+    :param output_options: (list) additional commands to pass to ffmpeg
+    """
+
+    def __init__(self, src: str, img_shape: Tuple[int, int] = None, verbose: bool = False,
+                 input_options=list(), output_options=list()):
         assert os.path.exists(src), f'File {src} doesnt exist'
 
         # PRIVATE attr
@@ -37,11 +54,12 @@ class NvidiaReader:
 
         self.n_elements = self.img_shape[0] * self.img_shape[1] * self.n_channel
 
-
         self._args = [FFMPEG_BIN,
-                      '-vcodec', self._set_codec(),
-                      '-i', src,
-                      '-f', 'image2pipe',
+                      '-vcodec', self._set_codec()] + \
+                     input_options + \
+                     ['-i', src, ] + \
+                     output_options + \
+                     ['-f', 'image2pipe',
                       '-pix_fmt', 'rgb24',
                       '-vcodec', 'rawvideo',
                       '-']
@@ -131,6 +149,11 @@ class NvidiaReader:
         self._imgshape = shape
 
     def read(self):
+        """
+        Read the whole video at once.
+        Be aware max. buffer size is 10**8
+        :return: np.ndarray of shape (T,H,W,3)
+        """
         bytes = self._pipe.stdout.read()
         array = np.frombuffer(bytes, dtype='uint8')
         nframes = int(array.shape[0] / (self.img_shape[0] * self.img_shape[1] * self.n_channel))
